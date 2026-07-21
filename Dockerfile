@@ -44,7 +44,9 @@ ENV CROSS_TRIPLE=aarch64-nextui-linux-gnu
 ENV CROSS_ROOT=${TOOLCHAIN_DIR}
 ENV SYSROOT=${CROSS_ROOT}/${CROSS_TRIPLE}/libc
 
-# Download and extract the SDK sysroot
+# Sysroot: For now just the TrimUI TG5040 SDK (glibc 2.33). H700 stock is Ubuntu 22.04 / glibc 2.35,
+# so binaries linked against this older glibc work. But this is not a full Anbernic/H700 rootfs.
+# Will be improved later.
 ENV SDK_URL=https://github.com/trimui/toolchain_sdk_smartpro/releases/download/20231018/SDK_usr_tg5040_a133p.tgz
 RUN mkdir -p ${SYSROOT} && wget -qO - ${SDK_URL} | tar -xzC ${SYSROOT}
 
@@ -76,7 +78,7 @@ RUN /root/support/build-bluez.sh
 RUN /root/support/build-libsamplerate.sh
 RUN /root/support/build-lz4.sh
 
-ENV UNION_PLATFORM=tg5040
+ENV UNION_PLATFORM=h700
 ENV PREFIX_LOCAL=/opt/nextui
 
 # just to make sure
