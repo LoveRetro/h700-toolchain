@@ -67,22 +67,24 @@ ENV ARCH=aarch64
 ENV CMAKE_TOOLCHAIN_FILE=${CROSS_ROOT}/Toolchain.cmake
 COPY toolchain-aarch64.cmake ${CROSS_ROOT}/Toolchain.cmake
 
-#ENV PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 ENV PKG_CONFIG_SYSROOT_DIR=${SYSROOT}
 ENV PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/share/pkgconfig
-
-# stuff and extra libs
-COPY support /root/support
-RUN /root/support/build-libzip.sh
-RUN /root/support/build-bluez.sh
-RUN /root/support/build-libsamplerate.sh
-RUN /root/support/build-lz4.sh
 
 ENV UNION_PLATFORM=h700
 ENV PREFIX_LOCAL=/opt/nextui
 
-# just to make sure
-RUN mkdir -p ${PREFIX_LOCAL}/include ${PREFIX_LOCAL}/lib
+RUN mkdir -p ${PREFIX_LOCAL}/include ${PREFIX_LOCAL}/lib ${PREFIX_LOCAL}/share
+
+# Extra libs into sysroot / PREFIX_LOCAL
+COPY support /root/support
+RUN /root/support/build-libzip.sh
+RUN /root/support/build-libsamplerate.sh
+RUN /root/support/build-lz4.sh
+# H700 uses stock BlueALSA/BlueZ at runtime — no bluez rebuild in this image.
+RUN /root/support/build-sdl2.sh
+
+# Prefer PREFIX_LOCAL (prebaked SDL2) over the SDK for pkg-config
+ENV PKG_CONFIG_PATH=${PREFIX_LOCAL}/lib/pkgconfig:${PREFIX_LOCAL}/lib/${CROSS_TRIPLE}/pkgconfig:${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/share/pkgconfig
 
 VOLUME /root/workspace
 WORKDIR /root/workspace
