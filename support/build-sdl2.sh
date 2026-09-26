@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-# H700 mali-fbdev SDL2 (JohnnyonFlame/SDL-malifbdev-rot), pinned + NextUI joystick patch.
+# H700 mali-fbdev SDL2 (JohnnyonFlame/SDL-malifbdev-rot), pinned + support/sdl2-h700.patch.
+# The patch restores joystick enumeration without libudev and gives the built-in
+# ANBERNIC-keys pad one fixed, TrimUI-compatible layout and GameController mapping
+# on every H700 model (SDL_JOYSTICK_H700_FIXED_LAYOUT=0 restores the old layout).
 # Installs into PREFIX_LOCAL so NextUI can link/package without rebuilding.
-#
-# Keep in sync with NextUI workspace/h700/patches/sdl2-h700.patch and the former
-# early-target configure flags in workspace/h700/makefile.
 
 SDL2_COMMIT=d4a7d7503524cc469fe775242f3f925d4dd56c88
 SDL2_SRC=/tmp/sdl2-h700
