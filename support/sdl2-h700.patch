@@ -40,10 +40,10 @@ index c6b57a87..a7373187 100644
      //while (pMappingString) {
      //    SDL_PrivateGameControllerAddMapping(pMappingString, SDL_CONTROLLER_MAPPING_PRIORITY_DEFAULT);
 diff --git a/src/joystick/linux/SDL_sysjoystick.c b/src/joystick/linux/SDL_sysjoystick.c
-index c11fb9cd..3feb5f00 100644
+index c11fb9cd..cff258ea 100644
 --- a/src/joystick/linux/SDL_sysjoystick.c
 +++ b/src/joystick/linux/SDL_sysjoystick.c
-@@ -229,11 +229,120 @@ static int GuessIsJoystick(int fd)
+@@ -229,11 +229,123 @@ static int GuessIsJoystick(int fd)
      return 0;
  }
  
@@ -56,7 +56,10 @@ index c11fb9cd..3feb5f00 100644
 +#define H700_KEY_L2   314
 +#define H700_KEY_R2   315
 +#define H700_NBUTTONS 15 /* 11 and 12 are reserved and never fire */
-+#define H700_IS_BUILTIN(joystick) ((joystick)->hwdata->guid.data[14] == 'n') /* tagged by IsJoystick() */
++/* Tagged by IsJoystick(). Pads without vendor or product IDs get a name-only GUID,
++   where byte 14 is a letter of the name but byte 15 is always 0. */
++#define H700_IS_BUILTIN(joystick) \
++    ((joystick)->hwdata->guid.data[14] == 'n' && (joystick)->hwdata->guid.data[15] == 1)
 +
 +enum
 +{
@@ -164,7 +167,7 @@ index c11fb9cd..3feb5f00 100644
  
      if (ioctl(fd, JSIOCGNAME(sizeof(product_string)), product_string) >= 0) {
          SDL_zero(inpid);
-@@ -272,7 +381,9 @@ static int IsJoystick(const char *path, int fd, char **name_return, SDL_Joystick
+@@ -272,7 +384,9 @@ static int IsJoystick(const char *path, int fd, char **name_return, SDL_Joystick
      SDL_Log("Joystick: %s, bustype = %d, vendor = 0x%.4x, product = 0x%.4x, version = %d\n", name, inpid.bustype, inpid.vendor, inpid.product, inpid.version);
  #endif
  
@@ -175,7 +178,7 @@ index c11fb9cd..3feb5f00 100644
  
      if (SDL_ShouldIgnoreJoystick(name, *guid)) {
          SDL_free(name);
-@@ -988,9 +1099,10 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
+@@ -988,9 +1102,10 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
      if ((ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybit)), keybit) >= 0) &&
          (ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absbit)), absbit) >= 0) &&
          (ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relbit)), relbit) >= 0)) {
@@ -187,7 +190,7 @@ index c11fb9cd..3feb5f00 100644
              if (test_bit(i, keybit)) {
  #ifdef DEBUG_INPUT_EVENTS
                  SDL_Log("Joystick has button: 0x%x\n", i);
-@@ -1038,7 +1150,7 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
+@@ -1038,7 +1153,7 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
                  ++joystick->nhats;
              }
          }
@@ -196,7 +199,7 @@ index c11fb9cd..3feb5f00 100644
              /* Skip digital hats */
              if (i >= ABS_HAT0X && i <= ABS_HAT3Y && joystick->hwdata->has_hat[(i - ABS_HAT0X) / 2]) {
                  continue;
-@@ -1082,6 +1194,9 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
+@@ -1082,6 +1197,9 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd)
                  ++joystick->naxes;
              }
          }
@@ -206,7 +209,7 @@ index c11fb9cd..3feb5f00 100644
          if (test_bit(REL_X, relbit) || test_bit(REL_Y, relbit)) {
              ++joystick->nballs;
          }
-@@ -1480,6 +1595,10 @@ static void PollAllValues(SDL_Joystick *joystick)
+@@ -1480,6 +1598,10 @@ static void PollAllValues(SDL_Joystick *joystick)
                                            joystick->hwdata->key_map[i], value);
              }
          }
@@ -217,7 +220,7 @@ index c11fb9cd..3feb5f00 100644
      }
  
      /* Joyballs are relative input, so there's no poll state. Events only! */
-@@ -1511,6 +1630,9 @@ static void HandleInputEvents(SDL_Joystick *joystick)
+@@ -1511,6 +1633,9 @@ static void HandleInputEvents(SDL_Joystick *joystick)
  
              switch (events[i].type) {
              case EV_KEY:
